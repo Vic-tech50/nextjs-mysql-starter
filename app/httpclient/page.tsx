@@ -13,20 +13,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { fetchData } from "../actions/crud";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import DeleteButton from "@/components/DeleteButton";
+
 import { http } from "@/lib/httpclient";
 
 export default async function Page() {

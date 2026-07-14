@@ -62,8 +62,8 @@ const data = {
           url: "/sms",
         },
         {
-          title: "Styling",
-          url: "#",
+          title: "Payment",
+          url: "/payment",
         },
         {
           title: "Optimizing",
