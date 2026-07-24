@@ -2,6 +2,7 @@
 
 import { transporter } from "@/lib/mail";
 import { contactTemplate } from "@/template/contact";
+import { after } from "next/server";
 
 export async function sendMail(prevState: any, formData: FormData) {
   const name = formData.get("name")?.toString();
@@ -16,6 +17,7 @@ export async function sendMail(prevState: any, formData: FormData) {
   }
 
   try {
+    after(async() => { // Use the after function to send the email after the response is sent like a background task
     await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to: process.env.SMTP_To,
@@ -30,7 +32,7 @@ export async function sendMail(prevState: any, formData: FormData) {
 
     //     <p>${message}</p>
     //   `,
-    });
+    })});
 
     return {
       success: true,

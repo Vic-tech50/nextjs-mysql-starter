@@ -188,3 +188,16 @@ export async function loginratelimiter(
 
   redirect("/dashboard");
 }
+
+
+export async function logout(){
+
+(await cookies()).delete("token");
+redirect("/login");
+
+}
+
+// export async function logout() {
+//   (await cookies()).delete("token");
+//   redirect("/login");
+// }

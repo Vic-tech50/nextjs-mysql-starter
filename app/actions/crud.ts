@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { revalidatePath, unstable_cache } from "next/cache";
+import { encrypt, decrypt } from "@/lib/encryption";
 
 export type CreateState = {
   success: boolean;
@@ -21,6 +22,11 @@ export type CreateState = {
     comment?: string;
   };
 };
+export type UpdateState = {
+  success: boolean;
+  message: string;
+  errors?: Record<string, string>;
+}
 
 
 export async function create(
@@ -62,9 +68,10 @@ export async function create(
   }
     const status = 1;
     const date = new Date()
+    const encrypted = encrypt(address);
   
     let action = await db.query(
-    "INSERT INTO crud(name,address,dob, comment, status, date) VALUES(?,?,?,?,?,?)", [name,address,dob, comment, status, date]
+    "INSERT INTO crud(name,address,dob, comment, status, date) VALUES(?,?,?,?,?,?)", [name,encrypted,dob, comment, status, date]
     );
 
     if(action){
@@ -181,29 +188,61 @@ export async function getById(id: number) {
   }
 }
 
-export async function update(id: number, formData: FormData) {
-  try{
-  await db.query(
-    `
-      UPDATE crud
-      SET name=?, address=?, dob=?, comment=?
-      WHERE id=?
-    `,
-    [
-      formData.get("name"),
-      formData.get("address"),
-      formData.get("dob"),
-      formData.get("comment"),
-      id,
-    ]
-  );
+export async function update(id: number, prevState: UpdateState, formData: FormData): Promise<UpdateState> { // Specify the return type as UpdateState
+  const name = (formData.get("name") as string)?.trim();
+  const address = (formData.get("address") as string)?.trim();
+  const dob = formData.get("dob") as string;
+  const comment = (formData.get("comment") as string)?.trim();
 
-  revalidatePath("/read");
+  // basic validation
+  const errors: Record<string, string> = {}; // Initialize an empty errors object
+  if (!name) errors.name = "Name is required";
+  if (!address) errors.address = "Address is required";
+  if (!dob) errors.dob = "Date of birth is required";
+
+  // If there are validation errors, return them without attempting to update the database
+  if (Object.keys(errors).length > 0) {
+    return { success: false, message: "Please fix the errors below", errors };
+  }
+
+  try {
+    await db.query(
+      `UPDATE crud SET name=?, address=?, dob=?, comment=? WHERE id=?`,
+      [name, address, dob, comment, id]
+    );
+  } catch (err: any) {
+    console.error("Update failed:", err.message);
+    return { success: false, message: "Something went wrong. Please try again." };
+  }
+
+  // ✅ revalidate + redirect OUTSIDE the try/catch, so it never gets caught
+  revalidatePath("/read"); // Call revalidatePath to revalidate the /read page after updating
   redirect("/read");
-}catch(err:any){
-  console.log(err.message)
 }
-}
+
+// export async function update(id: number, formData: FormData) {
+//   try{
+//   await db.query(
+//     `
+//       UPDATE crud
+//       SET name=?, address=?, dob=?, comment=?
+//       WHERE id=?
+//     `,
+//     [
+//       formData.get("name"),
+//       formData.get("address"),
+//       formData.get("dob"),
+//       formData.get("comment"),
+//       id,
+//     ]
+//   );
+
+//   revalidatePath("/read");
+//   redirect("/read");
+// }catch(err:any){
+//   console.log(err.message)
+// }
+// }
 
 
 export async function remove(id: number) {

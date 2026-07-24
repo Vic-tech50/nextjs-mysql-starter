@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { update } from "@/app/actions/crud";
+import { useActionState, useState } from "react";
+import { update, UpdateState } from "@/app/actions/crud";
 import {
   Field,
   FieldDescription,
@@ -15,15 +15,20 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
+
+const initialState: UpdateState = { success: false, message: "" };
+
 export default function EditForm({ record }: { record: any }) {
   const [name, setName] = useState(record.name);
   const [address, setAddress] = useState(record.address);
   const [dob, setDob] = useState(record.dob);
   const [comment, setComment] = useState(record.comment);
+  const updateWithId = update.bind(null, record.id); // Bind the record ID to the update function
+  const [state, formActionHere, isPending] = useActionState( updateWithId, initialState); //custom hook to manage form state and flash messages
 
   return (
     <>
-      <form action={update.bind(null, record.id)}>
+      <form action={formActionHere}>
         <FieldGroup>
           <FieldSet>
             <FieldLegend>Edit Page</FieldLegend>
@@ -38,11 +43,9 @@ export default function EditForm({ record }: { record: any }) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
-                {/* {state.errors?.name && (
-                      <p className="text-red-500 text-sm">
-                        {state.errors.name}
-                      </p>
-                    )} */}
+                {state.errors?.name && (
+                  <p className="text-red-500 text-sm">{state.errors.name}</p>
+                )}
               </Field>
               <Field>
                 <FieldLabel htmlFor="">Address</FieldLabel>
@@ -53,11 +56,9 @@ export default function EditForm({ record }: { record: any }) {
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                 />
-                {/* {state.errors?.address && (
-                      <p className="text-red-500 text-sm">
-                        {state.errors.address}
-                      </p>
-                    )} */}
+                {state.errors?.address && (
+                  <p className="text-red-500 text-sm">{state.errors.address}</p>
+                )}
                 <FieldDescription>
                   Enter your 16-digit card number
                 </FieldDescription>
@@ -73,11 +74,9 @@ export default function EditForm({ record }: { record: any }) {
                     onChange={(e) => setDob(e.target.value)}
                     name="dob"
                   />
-                  {/* {state.errors?.dob && (
-                        <p className="text-red-500 text-sm">
-                          {state.errors.dob}
-                        </p>
-                      )} */}
+                  {state.errors?.dob && (
+                    <p className="text-red-500 text-sm">{state.errors.dob}</p>
+                  )}
                 </Field>
               </div>
             </FieldGroup>
@@ -100,8 +99,20 @@ export default function EditForm({ record }: { record: any }) {
               </Field>
             </FieldGroup>
           </FieldSet>
+
+          {state.message && !state.success && (
+            <p className="text-red-500 text-sm">{state.message}</p>
+          )}
+
           <Field orientation="horizontal">
-            <Button type="submit">Edit</Button>
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="bg-indigo-600 text-white px-4 py-2 rounded disabled:opacity-50"
+            >
+              {isPending ? "Saving..." : "Save Changes"}
+            </Button>
+            {/* <Button type="submit">Edit</Button> */}
           </Field>
         </FieldGroup>
       </form>

@@ -12,14 +12,7 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Textarea } from "@/components/ui/textarea";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
@@ -37,23 +30,32 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-import { create } from "@/app/actions/crud";
+import { sendMail } from "@/app/actions/mail";
+import { useActionState } from "react"; //custom hook to manage form state and flash messages
 
+import { User } from "../../store/userdata"; //import the zustand store
+
+export function Header() {
+  const name = User((s) => s.name);
+  const email = User((s) => s.email);
+
+  return (
+    <div>
+      <h1>Welcome, {name}</h1>
+      <p>Email: {email}</p>
+    </div>
+  );
+}
+
+//flash message state
 const initialState = {
   success: false,
   message: "",
-  errors: {},
-  values: {
-    name: "",
-    address: "",
-    dob: "",
-    comment: "",
-  },
 };
 
-export default function Create() {
-  //   const [date, setDate] = React.useState<Date>();
-  const [state, formAction] = React.useActionState(create, initialState);
+export default function Email() {
+  const [state, formAction] = useActionState(sendMail, initialState); //custom hook to manage form state and flash messages
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -68,13 +70,14 @@ export default function Create() {
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Create </BreadcrumbPage>
+                <BreadcrumbPage>Email </BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4">
           <div className="w-[70%] mx-auto">
+            {/* //flash message */}
             {state.message && (
               <div
                 className={`rounded p-3 ${
@@ -86,65 +89,22 @@ export default function Create() {
                 {state.message}
               </div>
             )}
+
+            <Header />
             <form action={formAction}>
               <FieldGroup>
                 <FieldSet>
-                  <FieldLegend>Create</FieldLegend>
-                  <FieldDescription>
-                    All transactions are secure and encrypted
-                  </FieldDescription>
+                  <FieldLegend>Email</FieldLegend>
+                  <FieldDescription>Send Email</FieldDescription>
                   <FieldGroup>
                     <Field>
                       <FieldLabel htmlFor="">Name</FieldLabel>
-                      <Input
-                        id=""
-                        placeholder=""
-                        name="name"
-                        defaultValue={state.values?.name}
-                      />
-                      {state.errors?.name && (
-                        <p className="text-red-500 text-sm">
-                          {state.errors.name}
-                        </p>
-                      )}
+                      <Input id="" placeholder="" name="name" />
                     </Field>
                     <Field>
-                      <FieldLabel htmlFor="">Address</FieldLabel>
-                      <Input
-                        id=""
-                        placeholder=""
-                        name="address"
-                        defaultValue={state.values?.address}
-                      />
-                      {state.errors?.address && (
-                        <p className="text-red-500 text-sm">
-                          {state.errors.address}
-                        </p>
-                      )}
-                      <FieldDescription>
-                        Enter your 16-digit card number
-                      </FieldDescription>
+                      <FieldLabel htmlFor="">email</FieldLabel>
+                      <Input id="" placeholder="" name="email" />
                     </Field>
-                    <div className="">
-                      <Field>
-                        <FieldLabel htmlFor="">Date</FieldLabel>
-                        <Input
-                          type="date"
-                          id=""
-                          placeholder=""
-                          defaultValue={state.values?.dob}
-                          name="dob"
-                        />
-                        {state.errors?.dob && (
-                          <p className="text-red-500 text-sm">
-                            {state.errors.dob}
-                          </p>
-                        )}
-                        <FieldDescription>
-                          Enter your 16-digit card number
-                        </FieldDescription>
-                      </Field>
-                    </div>
                   </FieldGroup>
                 </FieldSet>
                 <FieldSeparator />
@@ -157,8 +117,7 @@ export default function Create() {
                         id=""
                         placeholder="Add any additional comments"
                         className="resize-none"
-                        name="comment"
-                        defaultValue={state.values?.comment}
+                        name="message"
                       />
                     </Field>
                   </FieldGroup>
@@ -172,13 +131,6 @@ export default function Create() {
               </FieldGroup>
             </form>
           </div>
-
-          {/* {Array.from({ length: 24 }).map((_, index) => (
-            <div
-              key={index}
-              className="aspect-video h-12 w-full rounded-lg bg-muted/50"
-            />
-          ))} */}
         </div>
       </SidebarInset>
     </SidebarProvider>
