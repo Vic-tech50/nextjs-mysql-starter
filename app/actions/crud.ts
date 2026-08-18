@@ -6,6 +6,16 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { revalidatePath, unstable_cache } from "next/cache";
 import { encrypt, decrypt } from "@/lib/encryption";
+import { z } from "zod";
+
+
+
+const recordSchema = z.object({
+  name: z.string().min(1, "Name is required").uppercase().trim(),
+  address: z.string().min(1, "Address is required").max(5, "Address is not up to 5 character").trim(),
+  dob: z.string().min(1, "Date of birth is required"),
+  comment: z.string().trim().optional(),
+});
 
 export type CreateState = {
   success: boolean;
@@ -25,67 +35,105 @@ export type CreateState = {
 export type UpdateState = {
   success: boolean;
   message: string;
-  errors?: Record<string, string>;
+  errors?: Record<string, string[]>;
+  
 }
 
 
 export async function create(
-  prevState: CreateState,
+  prevState: UpdateState,
   formData: FormData
-) {
-  const values = {
-    name: formData.get("name")?.toString() || "",
-    address: formData.get("address")?.toString() || "",
-    dob: formData.get("dob")?.toString() || "",
-    comment: formData.get("comment")?.toString() || "",
-  };
-  
+): Promise<UpdateState> {
+  // parse + validate all fields in one call
+  const result = recordSchema.safeParse({
+    name: formData.get("name"),
+    address: formData.get("address"),
+    dob: formData.get("dob"),
+    comment: formData.get("comment"),
+  });
 
-  const {name, address, dob, comment} = values
-
-
-   const errors: CreateState["errors"] = {};
-
-  if (!name.trim()) {
-    errors.name = "Name is required";
-  }
-
-  if (!address.trim()) {
-    errors.address = "Address is required";
-  }
-
-  if (!dob) {
-    errors.dob = "Date of birth is required";
-  }
-
-  if (Object.keys(errors).length > 0) {
+  if (!result.success) {
     return {
       success: false,
-      message: "Please fix the errors below.",
-      errors,
-      values,
+      message: "Please fix the errors below",
+      errors: result.error.flatten().fieldErrors,
     };
   }
-    const status = 1;
-    const date = new Date()
-    const encrypted = encrypt(address);
-  
-    let action = await db.query(
-    "INSERT INTO crud(name,address,dob, comment, status, date) VALUES(?,?,?,?,?,?)", [name,encrypted,dob, comment, status, date]
-    );
 
-    if(action){
-    return {
-        success: true,
-        message: "Added Successfully",
-        
-    }
+  // result.data is now fully typed AND validated — no more `as string` anywhere
+  const { name, address, dob, comment } = result.data;
+
+  try {
+    await db.query(
+      "INSERT INTO crud (name, address, dob, comment) VALUES (?, ?, ?, ?)",
+      [name, address ?? null, dob, comment ?? null]
+    );
+  } catch (err: any) {
+    return { success: false, message: "Database error, please try again" };
+  }
+
+  revalidatePath("/read");
+  redirect("/read");
 }
+
+
+// export async function create(
+//   prevState: CreateState,
+//   formData: FormData
+// ) {
+//   const values = {
+//     name: formData.get("name")?.toString() || "",
+//     address: formData.get("address")?.toString() || "",
+//     dob: formData.get("dob")?.toString() || "",
+//     comment: formData.get("comment")?.toString() || "",
+//   };
+  
+
+//   const {name, address, dob, comment} = values
+
+
+//    const errors: CreateState["errors"] = {};
+
+//   if (!name.trim()) {
+//     errors.name = "Name is required";
+//   }
+
+//   if (!address.trim()) {
+//     errors.address = "Address is required";
+//   }
+
+//   if (!dob) {
+//     errors.dob = "Date of birth is required";
+//   }
+
+//   if (Object.keys(errors).length > 0) {
+//     return {
+//       success: false,
+//       message: "Please fix the errors below.",
+//       errors,
+//       values,
+//     };
+//   }
+//     const status = 1;
+//     const date = new Date()
+//     const encrypted = encrypt(address);
+  
+//     let action = await db.query(
+//     "INSERT INTO crud(name,address,dob, comment, status, date) VALUES(?,?,?,?,?,?)", [name,encrypted,dob, comment, status, date]
+//     );
+
+//     if(action){
+//     return {
+//         success: true,
+//         message: "Added Successfully",
+        
+//     }
+// }
     // redirect(referer || "/");
 
   
 
-}
+// }
 
 // export async function fetchData() {
 //   try {
@@ -189,21 +237,40 @@ export async function getById(id: number) {
 }
 
 export async function update(id: number, prevState: UpdateState, formData: FormData): Promise<UpdateState> { // Specify the return type as UpdateState
-  const name = (formData.get("name") as string)?.trim();
-  const address = (formData.get("address") as string)?.trim();
-  const dob = formData.get("dob") as string;
-  const comment = (formData.get("comment") as string)?.trim();
+  // const name = (formData.get("name") as string)?.trim();
+  // const address = (formData.get("address") as string)?.trim();
+  // const dob = formData.get("dob") as string;
+  // const comment = (formData.get("comment") as string)?.trim();
+
+    const result = recordSchema.safeParse({
+    name: formData.get("name"),
+    address: formData.get("address"),
+    dob: formData.get("dob"),
+    comment: formData.get("comment"),
+  });
+
+
+    if (!result.success) {
+    return {
+      success: false,
+      message: "Please fix the errors below",
+      errors: result.error.flatten().fieldErrors,
+    };
+  }
+
+  // result.data is now fully typed AND validated — no more `as string` anywhere
+  const { name, address, dob, comment } = result.data;
 
   // basic validation
-  const errors: Record<string, string> = {}; // Initialize an empty errors object
-  if (!name) errors.name = "Name is required";
-  if (!address) errors.address = "Address is required";
-  if (!dob) errors.dob = "Date of birth is required";
+  // const errors: Record<string, string> = {}; // Initialize an empty errors object
+  // if (!name) errors.name = "Name is required";
+  // if (!address) errors.address = "Address is required";
+  // if (!dob) errors.dob = "Date of birth is required";
 
-  // If there are validation errors, return them without attempting to update the database
-  if (Object.keys(errors).length > 0) {
-    return { success: false, message: "Please fix the errors below", errors };
-  }
+  // // If there are validation errors, return them without attempting to update the database
+  // if (Object.keys(errors).length > 0) {
+  //   return { success: false, message: "Please fix the errors below", errors };
+  // }
 
   try {
     await db.query(

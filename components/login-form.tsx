@@ -44,6 +44,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [state, formAction] = useActionState(loginratelimiter, initialState);
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -70,7 +71,7 @@ export function LoginForm({
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Password</FieldLabel>
                   <Link
-                    href="#"
+                    href="/forgetpassword"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
                     Forgot your password?

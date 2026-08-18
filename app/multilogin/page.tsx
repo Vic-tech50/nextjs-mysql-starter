@@ -3,16 +3,30 @@
 
 import { useActionState } from "react";
 import { login, LoginState } from "@/app/actions/multiauth";
+import { generateCsrfToken } from "@/lib/csrf";
 
 const initialState: LoginState = { success: false };
 
 export default function LoginForm() {
   const [state, formAction, isPending] = useActionState(login, initialState);
+  //   const csrfToken = await generateCsrfToken(); // csrf protection
 
   return (
     <form action={formAction} className="max-w-sm mx-auto space-y-4 p-6">
-      <input name="email" type="email" placeholder="Email" required className="w-full border rounded px-3 py-2" />
-      <input name="password" type="password" placeholder="Password" required className="w-full border rounded px-3 py-2" />
+      <input
+        name="email"
+        type="email"
+        placeholder="Email"
+        required
+        className="w-full border rounded px-3 py-2"
+      />
+      <input
+        name="password"
+        type="password"
+        placeholder="Password"
+        required
+        className="w-full border rounded px-3 py-2"
+      />
 
       {state.message && <p className="text-red-500 text-sm">{state.message}</p>}
 

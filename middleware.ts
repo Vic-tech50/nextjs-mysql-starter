@@ -26,7 +26,7 @@ const adminRoutes = ["/admin"];
 const authRoutes = ["/login", "/register"];
 
 // Middleware function to handle route access based on authentication and authorization
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl; // Get the pathname of the incoming request 
   const token = req.cookies.get("token")?.value; // Get the JWT token from cookiesy
 

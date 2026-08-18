@@ -33,6 +33,17 @@ export async function login(
     return { success: false, message: "Incorrect password." };
   }
 
+   if (!user.email_verified) {
+    redirect(`/resend-verification?email=${encodeURIComponent(email)}`);
+  }
+
+  // if (!user.email_verified) {
+  //   return {
+  //     success: false,
+  //     message: "Please verify your email before logging in. Check your inbox.",
+  //   };
+  // }
+
   const token = generateToken({ id: user.id, email: user.email, role: user.role }); // token generation with user role
 
   // Set the token in cookies with appropriate options
